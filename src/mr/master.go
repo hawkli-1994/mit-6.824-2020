@@ -3,7 +3,6 @@ package mr
 import (
 	"fmt"
 	"os/exec"
-	"time"
 
 	//"go/types"
 	//"fmt"
@@ -11,16 +10,16 @@ import (
 	//"io/ioutil"
 	"log"
 	//"path/filepath"
+	"net"
+	"net/http"
+	"net/rpc"
+	"os"
 	"sync"
 )
-import "net"
-import "os"
-import "net/rpc"
-import "net/http"
+
 //import "sync/atomic"
 
 var ops int = 0
-
 
 func initTask(filename string, typo int, nReduce int) *TaskInfo {
 	task := TaskInfo{Filename: filename, Typo: typo, nReduce: nReduce}
@@ -41,9 +40,9 @@ func (m *Master) findTask(task *TaskInfo) *TaskInfo {
 }
 
 func (m *Master) TaskSuccess(args *TaskInfo, reply *TaskInfo) error {
-	fmt.Printf("接收到成功信号, ID: %d\n", args.ID)
+	//fmt.Printf("接收到成功信号, ID: %d\n", args.ID)
 	task := m.findTask(args)
-	fmt.Printf("寻找到本地对象, ID: %d\n", task.ID)
+	//fmt.Printf("寻找到本地对象, ID: %d\n", task.ID)
 	task.status = tSuccess
 	task.done = true
 	alldone := true
@@ -54,15 +53,15 @@ func (m *Master) TaskSuccess(args *TaskInfo, reply *TaskInfo) error {
 		}
 	}
 	if alldone && m.Status == mMaping {
-		fmt.Printf("master 状态转换为 mapend %d------\n", mMapend)
+		//fmt.Printf("master 状态转换为 mapend %d------\n", mMapend)
 		m.Status = mMapend
-		fmt.Printf("map is done!\n")
+		//fmt.Printf("map is done!\n")
 		m.makeReduceTask()
 		return nil
 	}
 	if alldone && m.Status == mReducing {
 		m.Status = mDone
-		fmt.Printf("reduce is done!\n")
+		//fmt.Printf("reduce is done!\n")
 		return nil
 	}
 	return nil
@@ -96,7 +95,7 @@ func (m *Master) GetTask(args *TaskInfo, reply *TaskInfo) error {
 			reply.nReduce = m.NReduce
 			reply.Typo = task.Typo
 			reply.Index = task.Index
-			fmt.Printf("给出任务类型%d, 文件名%s \n", reply.Typo, reply.Filename)
+			//fmt.Printf("给出任务类型%d, 文件名%s \n", reply.Typo, reply.Filename)
 			return nil
 		}
 	}
@@ -110,8 +109,6 @@ func (m *Master) GetMasterInfo(args *MasterInfo, reply *MasterInfo) error {
 	return nil
 }
 
-
-
 type MapTask struct {
 	TaskInfo
 }
@@ -122,7 +119,7 @@ type ReduceTask struct {
 
 type Master struct {
 	// Your definitions here.
-	mutex     sync.Mutex
+	mutex sync.Mutex
 	//status    MasterStatus
 	TaskQueue []*TaskInfo
 	//nReduce   int
@@ -211,28 +208,28 @@ func MakeMaster(files []string, nReduce int) *Master {
 		mapTask := newMapTask(file, nReduce)
 		m.TaskQueue = append(m.TaskQueue, mapTask)
 	}
-	fmt.Printf("共有%d个任务", len(m.TaskQueue))
-	go func() error {
-		for true {
-			fmt.Printf("当前master状态为%d\n", m.Status)
-			success := 0
-			for _, i := range m.TaskQueue {
-				if i.status == tSuccess {
-					success += 1
-				}
-			}
-			fmt.Printf("成功任务数量%d", success)
-			if m.Status == mDone {
-				break
-			}
-			time.Sleep(time.Second)
-			time.Sleep(time.Second)
-			time.Sleep(time.Second)
-			time.Sleep(time.Second)
-			time.Sleep(time.Second)
-		}
-		return nil
-	}()
+	//fmt.Printf("共有%d个任务", len(m.TaskQueue))
+	// go func() error {
+	// 	for true {
+	// 		//fmt.Printf("当前master状态为%d\n", m.Status)
+	// 		success := 0
+	// 		for _, i := range m.TaskQueue {
+	// 			if i.status == tSuccess {
+	// 				success += 1
+	// 			}
+	// 		}
+	// 		//fmt.Printf("成功任务数量%d", success)
+	// 		if m.Status == mDone {
+	// 			break
+	// 		}
+	// 		time.Sleep(time.Second)
+	// 		time.Sleep(time.Second)
+	// 		time.Sleep(time.Second)
+	// 		time.Sleep(time.Second)
+	// 		time.Sleep(time.Second)
+	// 	}
+	// 	return nil
+	// }()
 	m.Status = mMaping
 	m.server()
 	return &m
