@@ -19,5 +19,5 @@ jobs:
         go-version: 1.16
 
     - name: test-mr
-      run: bash test-mr.sh
+      run: cd src/main && bash test-mr.sh
 
