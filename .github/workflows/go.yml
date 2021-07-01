@@ -18,6 +18,6 @@ jobs:
       with:
         go-version: 1.16
 
-    - name: Check lab1
-      run: make check-lab1
+    - name: test-mr
+      run: bash test-mr.sh
 
